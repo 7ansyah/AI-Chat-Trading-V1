@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>AI Trading BTC/USDT</title>
+	<link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+	<header>
+	  <button id="startBtn">▶️ Mulai</button>
+	  <button id="pauseBtn">⏸️ Pause</button>
+	  <button id="devBtn">🧠 Developer</button>
+	</header>
+
+	<main>
+	  <div id="chatWindow"></div>
+
+	  <form id="chatForm">
+		<input type="text" id="userInput" placeholder="Ketik pesan Anda..." autocomplete="off" />
+		<input type="file" id="imageInput" accept="image/*" hidden />
+		<button type="button" id="imageBtn">📷</button>
+		<button type="submit">Kirim</button>
+	  </form>
+	</main>
+
+	<script src="main.js"></script>
+  </body>
+</html>
