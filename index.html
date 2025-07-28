@@ -7,22 +7,31 @@
 	<link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-	<header>
-	  <button id="startBtn">▶️ Mulai</button>
-	  <button id="pauseBtn">⏸️ Pause</button>
-	  <button id="devBtn">🧠 Developer</button>
-	</header>
+	<div id="app">
+	  <!-- Header / Kontrol Atas -->
+	  <header class="header">
+		<button id="btn-start" class="header-btn">Mulai</button>
+		<div class="header-title">AI Trading BTC/USDT</div>
+		<button id="btn-developer" class="header-btn">Developer</button>
+	  </header>
 
-	<main>
-	  <div id="chatWindow"></div>
+	  <!-- Area Obrolan -->
+	  <div id="chat-container" class="chat-container">
+		<!-- Chat akan muncul di sini -->
+	  </div>
 
-	  <form id="chatForm">
-		<input type="text" id="userInput" placeholder="Ketik pesan Anda..." autocomplete="off" />
-		<input type="file" id="imageInput" accept="image/*" hidden />
-		<button type="button" id="imageBtn">📷</button>
-		<button type="submit">Kirim</button>
-	  </form>
-	</main>
+	  <!-- Input Chat -->
+	  <footer class="chat-input-footer">
+		<input
+		  type="text"
+		  id="chat-input"
+		  placeholder="Ketik pesan ke AI Alpha atau Beta..."
+		  autocomplete="off"
+		/>
+		<input type="file" id="image-upload" accept="image/*" title="Kirim Gambar Chart" />
+		<button id="send-btn">Kirim</button>
+	  </footer>
+	</div>
 
 	<script src="main.js"></script>
   </body>
