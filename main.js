@@ -1,118 +1,108 @@
-// Elemen HTML
-const chatInput = document.getElementById("chat-input");
+// main.js
+const chatContainer = document.getElementById("chat");
+const input = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
-const chatContainer = document.getElementById("chat-container");
-const imageUpload = document.getElementById("image-upload");
-const btnStart = document.getElementById("btn-start");
-const btnDeveloper = document.getElementById("btn-developer");
+const startBtn = document.getElementById("start-btn");
+const pauseBtn = document.getElementById("pause-btn");
+const developerBtn = document.getElementById("developer-btn");
 
-let conversationActive = false;
+let isRunning = false;
+let role = "user"; // default pengirim pesan
 
-// Tambahkan pesan ke UI
-function appendMessage(sender, text) {
-  const bubble = document.createElement("div");
-  bubble.classList.add("chat-bubble");
-
-  if (sender === "alpha") bubble.classList.add("chat-alpha");
-  else if (sender === "beta") bubble.classList.add("chat-beta");
-  else if (sender === "developer") bubble.classList.add("chat-developer");
-  else bubble.classList.add("chat-user");
-
-  bubble.innerText = text;
-  chatContainer.appendChild(bubble);
+// Format pesan ke tampilan UI
+function addMessageToChat(sender, message) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}`;
+  msg.innerText = `${sender}: ${message}`;
+  chatContainer.appendChild(msg);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Kirim pesan teks ke server
-async function sendMessageToServer(role, message) {
-  appendMessage("user", message);
-
+// Kirim pesan ke server dan tunggu balasan AI
+async function sendMessageToServer(sender, message) {
   try {
-    const res = await fetch("/api/message", {
+    const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, message }),
+      body: JSON.stringify({ role: sender, message }),
     });
 
-    const data = await res.json();
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("❌ Server response error:", errText);
+      addMessageToChat("system", "⚠️ Gagal mengirim pesan ke server.");
+      return;
+    }
 
-    data.replies.forEach(reply => {
-      appendMessage(reply.role, reply.content);
-    });
-  } catch (err) {
-    appendMessage("developer", "⚠️ Gagal mengirim pesan ke server.");
-    console.error(err);
+    const data = await response.json();
+    addMessageToChat(sender, message); // tampilkan pesan pengguna
+    addMessageToChat("AI", data.reply); // tampilkan balasan AI
+  } catch (error) {
+    console.error("❌ Fetch error:", error);
+    addMessageToChat("system", "❌ Tidak dapat terhubung ke server.");
   }
 }
 
-// Kirim gambar chart ke server
-async function sendImageToServer(file) {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  appendMessage("user", "📷 Mengirim gambar chart...");
-
-  try {
-    const res = await fetch("/api/image", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    data.replies.forEach(reply => {
-      appendMessage(reply.role, reply.content);
-    });
-  } catch (err) {
-    appendMessage("developer", "⚠️ Gagal mengirim gambar.");
-    console.error(err);
-  }
-}
-
-// Kirim tombol atau perintah awal
-function triggerStartConversation() {
-  conversationActive = true;
-  appendMessage("system", "🟢 Obrolan dimulai. Alpha & Beta aktif.");
-  sendMessageToServer("system", "Mulai diskusi trading sekarang.");
-}
-
-function triggerDeveloperCheck() {
-  sendMessageToServer("developer", "Periksa kode sistem dan beri saran pengembangan.");
-}
-
-// Tombol Kirim
-sendBtn.addEventListener("click", () => {
-  const message = chatInput.value.trim();
+// Fungsi kirim pesan (manual oleh user)
+function handleSend() {
+  const message = input.value.trim();
   if (!message) return;
-  sendMessageToServer("user", message);
-  chatInput.value = "";
+  sendMessageToServer(role, message);
+  input.value = "";
+}
+
+// Event klik tombol kirim
+sendBtn.addEventListener("click", handleSend);
+input.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") handleSend();
 });
 
-// Tombol Enter keyboard
-chatInput.addEventListener("keypress", e => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    sendBtn.click();
+// Jalankan simulasi obrolan antar Alpha dan Beta
+async function simulateConversation() {
+  let message = "Halo, menurutmu market BTC hari ini bagaimana?";
+  let turn = "alpha";
+
+  while (isRunning) {
+    addMessageToChat(turn, message);
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: turn, message }),
+    });
+
+    if (!response.ok) {
+      addMessageToChat("system", "⚠️ Error saat komunikasi antar AI.");
+      break;
+    }
+
+    const data = await response.json();
+    message = data.reply;
+
+    // Ganti giliran
+    turn = turn === "alpha" ? "beta" : "alpha";
+
+    await new Promise((res) => setTimeout(res, 3000)); // jeda 3 detik antar AI
+  }
+}
+
+// Tombol MULAI: memicu obrolan antara Alpha dan Beta
+startBtn.addEventListener("click", () => {
+  if (!isRunning) {
+    isRunning = true;
+    simulateConversation();
+    addMessageToChat("system", "🟢 AI Alpha dan Beta mulai berdiskusi...");
   }
 });
 
-// Tombol Mulai
-btnStart.addEventListener("click", () => {
-  if (!conversationActive) triggerStartConversation();
+// Tombol PAUSE: hentikan obrolan
+pauseBtn.addEventListener("click", () => {
+  isRunning = false;
+  addMessageToChat("system", "⏸️ Obrolan AI dijeda.");
 });
 
-// Tombol Developer
-btnDeveloper.addEventListener("click", () => {
-  triggerDeveloperCheck();
-});
-
-// Klik ikon untuk unggah gambar
-document.querySelector(".chat-input-footer::before")?.addEventListener("click", () => {
-  imageUpload.click();
-});
-
-// Upload Gambar Chart
-imageUpload.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (file) sendImageToServer(file);
+// Tombol DEVELOPER: panggil AI Developer
+developerBtn.addEventListener("click", () => {
+  const message = "Cek kode aplikasi dan beritahu kekurangan atau saran perbaikan.";
+  role = "developer";
+  sendMessageToServer(role, message);
 });
